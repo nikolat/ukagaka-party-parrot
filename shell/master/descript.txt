@@ -1,0 +1,6 @@
+charset,UTF-8
+type,shell
+name,master
+craftman,
+craftmanurl,https://cultofthepartyparrot.com/
+sakura.defaultleft,0

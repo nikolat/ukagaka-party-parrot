@@ -1,0 +1,27 @@
+charset,UTF-8
+version,1
+
+group,Sirocco
+{
+	scope,0
+	0,素
+}
+
+group,none
+{
+	scope,1
+	10,無し
+}
+
+group,__disabled
+{
+	101,__parts
+	102,__parts
+	103,__parts
+	104,__parts
+	105,__parts
+	106,__parts
+	107,__parts
+	108,__parts
+	109,__parts
+}

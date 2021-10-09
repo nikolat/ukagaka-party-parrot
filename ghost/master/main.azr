@@ -1,0 +1,155 @@
+int unloaded = 0;
+int display_width = -1;
+int dance = 1;
+int isdragging = 0;
+int surface_width = -1;
+int ismouseleft = 0;
+double CHECK_MOUSE_INTERVAL = 0.125;
+int THRESHOLD_DISTANCE = 300;
+
+load()
+{
+	_saoriload("saori\HandUtil\HandUtil.dll", "HandUtil");
+	_create_thread("TH_CheckMouse");
+}
+unload()
+{
+	_saoriunload("HandUtil");
+	unloaded = 1;
+}
+
+OnDisplayChange(dict ref)
+{
+	display_width = ref["Reference1"];
+}
+
+string OnFirstBoot()          { return "\0\s[0]\e"; }
+string OnBoot()               { return "\0\s[0]\e"; }
+string OnGhostChanged()       { return "\0\s[0]\e"; }
+string OnShellChanged()       { return "\0\s[0]\e"; }
+string OnWindowStateRestore() { return "\0\s[0]\e"; }
+string OnSurfaceRestore()     { return ""; }
+string OnClose()              { return "\-\e"; }
+
+string OnMouseDoubleClick(dict ref)
+{
+	dance = !dance;
+	return "\0\i[" + dance + "]\e";
+}
+string OnMouseDragStart(dict ref)
+{
+	isdragging = 1;
+	return "\0\![set,alignmenttodesktop,free]\![set,scaling,,-100]\e";
+}
+string OnMouseDragEnd(dict ref)
+{
+	isdragging = 0;
+	return "\0\![set,alignmenttodesktop,default]\![set,scaling,,100]\e";
+}
+
+string OnSecondChange(dict ref)
+{
+	if (!dance || isdragging)
+		return "";
+	return dance_icon() + "\e";
+}
+string dance_icon()
+{
+	string s = "";
+	for (int i = 0; i < 10; i++)
+	{
+		s += "\![set,tasktrayicon,icon/parrot" + i + ".ico]";
+		if (i < 9)
+			s += "\_w[50]";
+	}
+	s += "\_w[50]" + s;
+	return s;
+}
+
+TH_CheckMouse()
+{
+	while(1)
+	{
+		if (unloaded)
+			break;
+		string s = run_away();
+		if (s != "")
+			_speak(s);
+		_sleep(CHECK_MOUSE_INTERVAL);
+	}
+}
+
+string run_away()
+{
+	if (!dance || isdragging)
+		return "";
+	if (display_width <= 0)
+		return "";
+	if (surface_width <= 0)
+		surface_width = get_surface_width();
+	if (surface_width <= 0)
+		return "";
+	dict d = _mousepos();
+	int mx = d["x"];
+	int my = d["y"];
+	array a = get_position();
+	int px = a[0];
+	int py = a[1] - (surface_width / 2);
+	int r = _sqrt(_pow(mx - px, 2) + _pow(my - py, 2));
+	int l = THRESHOLD_DISTANCE;
+	int diffx = _sqrt(_pow(l, 2) - _pow(my - py, 2));
+	int nx;
+	if (px < mx)
+		nx = px - diffx;
+	else
+		nx = px + diffx;
+	int max = display_width - surface_width;
+	if (nx > max)
+		nx = max;
+	else if (nx < 0)
+		nx = 0;
+	int centerx = display_width / 2;
+	string s;
+	if (mx < px && !ismouseleft)
+	{
+		ismouseleft = 1;
+		s += "\![set,scaling,-100,]";
+	}
+	else if (px <= mx && ismouseleft)
+	{
+		ismouseleft = 0;
+		s += "\![set,scaling,100,]";
+	}
+	if (r < l && nx + (surface_width / 2) != px)
+		s += "\![move,--X=" + nx + ",--time=" + (1000 * CHECK_MOUSE_INTERVAL) + "]";
+	return s;
+}
+
+array get_position()
+{
+	array r = get_rect();
+	int x = (r[0] + r[2]) / 2;
+	int y = r[3];
+	return {x, y};
+}
+
+int get_surface_width()
+{
+	array r = get_rect();
+	int lx = r[2] - r[0];
+	return lx;
+}
+
+array get_rect()
+{
+	string hwnd = _strsplit(_systemdict["hwnd"]["Reference0"], _bytechar(1))[0];
+	string sender = _systemdict["OnNotifySelfInfo"]["Reference1"];
+	array a = {"HandUtil", "DSSTPSend", hwnd, "result"
+		,"EXECUTE SSTP/1.1"
+		,"Charset: Shift_JIS"
+		,"Sender: " + sender
+		,"Command: GetProperty[currentghost.scope(0).rect]"};
+	dict d = _saorirequest(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7]);
+	array r = _strsplit(d["Value1"], ",");
+	return {(int)r[0], (int)r[1], (int)r[2], (int)r[3]};
+}

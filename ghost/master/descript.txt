@@ -1,0 +1,12 @@
+charset,UTF-8
+type,ghost
+shiori,akari.dll
+name,Party Parrot
+sakura.name,Sirocco
+kero.name,none
+craftman,Don
+craftmanurl,http://nikolat.herokuapp.com/
+homeurl,https://raw.githubusercontent.com/nikolat/ukagaka-party-parrot/main/
+icon,icon/parrot0.ico
+don't need onmousemove,1
+readme.charset,UTF-8
