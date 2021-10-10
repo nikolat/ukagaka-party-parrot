@@ -1,16 +1,25 @@
 int unloaded = 0;
 int display_width = -1;
 int dance = 1;
-int isdragging = 0;
-int surface_width = -1;
-int surface_height = -1;
-int ismouseleft = 0;
+int maxscope = 0;
+array isdragging;
+array surface_width;
+array surface_height;
+array ismouseleft;
 double CHECK_MOUSE_INTERVAL = 0.125;
 int THRESHOLD_DISTANCE = 300;
 
 load()
 {
 	_saoriload("saori\HandUtil\HandUtil.dll", "HandUtil");
+	maxscope = count_scope();
+	for (int i = 0; i <= maxscope; i++)
+	{
+		isdragging += 0;
+		surface_width += -1;
+		surface_height += -1;
+		ismouseleft += 0;
+	}
 	_create_thread("TH_CheckMouse");
 }
 unload()
@@ -19,38 +28,90 @@ unload()
 	unloaded = 1;
 }
 
+int count_scope()
+{
+	int r = 0;
+	string path = "..\..\shell\master";
+	dict d = _fenum(path);
+	array folders = d["folder"];
+	int i = 0;
+	while(1)
+	{
+		i++;
+		string folder = fill2(i);
+		if (ASEARCH(folder, folders) >= 0)
+			r = i;
+		else
+			break;
+	}
+	return r;
+}
+string fill2(int n)
+{
+	if (n < 10)
+		return "0" + n;
+	else
+		return "" + n;
+}
+int ASEARCH(string key, array ary)
+{
+	for (int i = 0; ary[i] != nil; i++)
+	{
+		if (key == ary[i])
+			return i;
+	}
+	return -1;
+}
+
 OnDisplayChange(dict ref)
 {
 	display_width = ref["Reference1"];
 }
 
-string OnFirstBoot()          { return "\0\s[0]\e"; }
-string OnBoot()               { return "\0\s[0]\e"; }
-string OnGhostChanged()       { return "\0\s[0]\e"; }
-string OnShellChanged()       { return "\0\s[0]\e"; }
-string OnWindowStateRestore() { return "\0\s[0]\e"; }
+string OnFirstBoot()          { return show_scope_all() + "\e"; }
+string OnBoot()               { return show_scope_all() + "\e"; }
+string OnGhostChanged()       { return show_scope_all() + "\e"; }
+string OnShellChanged()       { return show_scope_all() + "\e"; }
+string OnWindowStateRestore() { return show_scope_all() + "\e"; }
 string OnSurfaceRestore()     { return ""; }
 string OnClose()              { return "\-\e"; }
+
+string show_scope_all()
+{
+	string s;
+	for (int i = 0; i <= maxscope; i++)
+	{
+		s += "\p[" + i + "]\s[" + (10 * i) + "]";
+	}
+	return s;
+}
 
 string OnMouseDoubleClick(dict ref)
 {
 	dance = !dance;
-	return "\0\i[" + dance + "]\e";
+	string s;
+	for (int i = 0; i <= maxscope; i++)
+	{
+		s += "\p[" + i + "]\i[" + dance + "]";
+	}
+	return s + "\e";
 }
 string OnMouseDragStart(dict ref)
 {
-	isdragging = 1;
-	return "\0\![set,alignmenttodesktop,free]\![set,scaling,,-100]\e";
+	int scope = ref["Reference3"];
+	isdragging[scope] = 1;
+	return "\p[" + scope + "]\![set,alignmenttodesktop,free]\![set,scaling,,-100]\e";
 }
 string OnMouseDragEnd(dict ref)
 {
-	isdragging = 0;
-	return "\0\![set,alignmenttodesktop,default]\![set,scaling,,100]\e";
+	int scope = ref["Reference3"];
+	isdragging[scope] = 0;
+	return "\p[" + scope + "]\![set,alignmenttodesktop,default]\![set,scaling,,100]\e";
 }
 
 string OnSecondChange(dict ref)
 {
-	if (!dance || isdragging)
+	if (!dance)
 		return "";
 	return dance_icon() + "\e";
 }
@@ -73,33 +134,44 @@ TH_CheckMouse()
 	{
 		if (unloaded)
 			break;
-		string s = run_away();
+		string s = run_away_all();
 		if (s != "")
 			_speak(s);
 		_sleep(CHECK_MOUSE_INTERVAL);
 	}
 }
 
-string run_away()
+string run_away_all()
 {
-	if (!dance || isdragging)
+	if (!dance)
+		return "";
+	string s;
+	for (int i = 0; i <= maxscope; i++)
+	{
+		s += run_away(i);
+	}
+	return s;
+}
+string run_away(int scope)
+{
+	if (isdragging[scope])
 		return "";
 	if (display_width <= 0)
 		return "";
-	if (surface_width <= 0 || surface_height <= 0)
+	if (surface_width[scope] <= 0 || surface_height[scope] <= 0)
 	{
-		array asize = get_surface_size();
-		surface_width = asize[0];
-		surface_height = asize[1];
+		array asize = get_surface_size(scope);
+		surface_width[scope] = asize[0];
+		surface_height[scope] = asize[1];
 	}
-	if (surface_width <= 0 || surface_height <= 0)
+	if (surface_width[scope] <= 0 || surface_height[scope] <= 0)
 		return "";
 	dict d = _mousepos();
 	int mx = d["x"];
 	int my = d["y"];
-	array a = get_position();
+	array a = get_position(scope);
 	int px = a[0];
-	int py = a[1] - (surface_height / 2);
+	int py = a[1] - (surface_height[scope] / 2);
 	int r = _sqrt(_pow(mx - px, 2) + _pow(my - py, 2));
 	int l = THRESHOLD_DISTANCE;
 	int diffx = _sqrt(_pow(l, 2) - _pow(my - py, 2));
@@ -108,46 +180,46 @@ string run_away()
 		nx = px - diffx;
 	else
 		nx = px + diffx;
-	int max = display_width - (surface_width / 2);
+	int max = display_width - (surface_width[scope] / 2);
 	if (nx > max)
 		nx = max;
-	else if (nx - (surface_width / 2) < 0)
-		nx = surface_width / 2;
+	else if (nx - (surface_width[scope] / 2) < 0)
+		nx = surface_width[scope] / 2;
 	string s;
-	if (mx < px && !ismouseleft)
+	if (mx < px && !ismouseleft[scope])
 	{
-		ismouseleft = 1;
+		ismouseleft[scope] = 1;
 		s += "\![set,scaling,-100,]";
 	}
-	else if (px <= mx && ismouseleft)
+	else if (px <= mx && ismouseleft[scope])
 	{
-		ismouseleft = 0;
+		ismouseleft[scope] = 0;
 		s += "\![set,scaling,100,]";
 	}
 	if (r < l && nx != px)
-		s += "\![move,--X=" + (nx - (surface_width / 2)) + ",--time=" + (1000 * CHECK_MOUSE_INTERVAL) + "]";
+		s += "\![move,--X=" + (nx - (surface_width[scope] / 2)) + ",--time=" + (1000 * CHECK_MOUSE_INTERVAL) + "]";
 	if (s != "")
-		s = "\0" + s;
+		s = "\p[" + scope + "]" + s;
 	return s;
 }
 
-array get_position()
+array get_position(int scope)
 {
-	array r = get_rect();
+	array r = get_rect(scope);
 	int x = (r[0] + r[2]) / 2;
 	int y = r[3];
 	return {x, y};
 }
 
-array get_surface_size()
+array get_surface_size(int scope)
 {
-	array r = get_rect();
+	array r = get_rect(scope);
 	int lx = r[2] - r[0];
 	int ly = r[3] - r[1];
 	return {lx, ly};
 }
 
-array get_rect()
+array get_rect(int scope)
 {
 	string hwnd = _strsplit(_systemdict["hwnd"]["Reference0"], _bytechar(1))[0];
 	string sender = _systemdict["OnNotifySelfInfo"]["Reference1"];
@@ -155,8 +227,86 @@ array get_rect()
 		,"EXECUTE SSTP/1.1"
 		,"Charset: Shift_JIS"
 		,"Sender: " + sender
-		,"Command: GetProperty[currentghost.scope(0).rect]"};
+		,"Command: GetProperty[currentghost.scope(" + scope + ").rect]"};
 	dict d = _saorirequest(a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7]);
 	array r = _strsplit(d["Value1"], ",");
 	return {(int)r[0], (int)r[1], (int)r[2], (int)r[3]};
+}
+
+string OnInstallComplete(dict ref)
+{
+	if (ref["Reference0"] == "supplement")
+	{
+		int scope = maxscope + 1;
+		if (move_images(scope))
+		{
+			make_surfaces_txt(scope);
+			return "\![change,ghost," + _systemdict["OnNotifySelfInfo"]["Reference1"] + "]\e";
+		}
+	}
+}
+int move_images(int scope)
+{
+	string directory = "..\..\shell\master\\" + fill2(scope);
+	_dcreate(directory);
+	string path = "..\..\\";
+	dict d = _fenum(path);
+	array files = d["file"];
+	int count = 0;
+	for (int i = 0; files[i] != nil; i++)
+	{
+		if (_regex_match(files[i], "^\d+\.png$"))
+		{
+			string path_from = path + files[i];
+			string path_to = path + "shell\master\\" + fill2(scope) + "\\" + files[i];
+			_fmove(path_from, path_to);
+			count++;
+		}
+	}
+	if (count < 10)
+	{
+		_ddelete(directory);
+		return 0;
+	}
+	return 1;
+}
+make_surfaces_txt(int scope)
+{
+	string ns = fill2(scope);
+	string path = "..\..\shell\master\surfaces" + ns + ".txt";
+	string text = ""
+		+ "charset,UTF-8" + _bytechar(1)
+		+ "" + _bytechar(1)
+		+ "descript" + _bytechar(1)
+		+ "{" + _bytechar(1)
+		+ "version,1" + _bytechar(1)
+		+ "}" + _bytechar(1)
+		+ "" + _bytechar(1)
+		+ "surface" + (10 * scope) + _bytechar(1)
+		+ "{" + _bytechar(1)
+		+ "element0,base," + ns + "/0.png,0,0" + _bytechar(1)
+		+ "" + _bytechar(1)
+		+ "animation0.interval,never" + _bytechar(1)
+		+ "animation0.pattern0,stop,2" + _bytechar(1)
+		+ "" + _bytechar(1)
+		+ "animation1.interval,never" + _bytechar(1)
+		+ "animation1.pattern0,start,2" + _bytechar(1)
+		+ "" + _bytechar(1)
+		+ "animation2.interval,always" + _bytechar(1);
+	for (int i = 0; i < 9; i++)
+	{
+		text += "animation2.pattern" + i + ",replace,1" + ns + fill2(i + 1) + ",50,0,0" + _bytechar(1);
+	}
+	text += "animation2.pattern9,replace," + (10 * scope) + ",50,0,0" + _bytechar(1)
+		+ "}" + _bytechar(1)
+		+ "" + _bytechar(1);
+	for (int i = 0; i < 9; i++)
+	{
+		text += "surface1" + ns + fill2(i + 1) + _bytechar(1)
+			+ "{" + _bytechar(1)
+			+ "element0,base," + ns + "/" + (i + 1) + ".png,0,0" + _bytechar(1)
+			+ "}" + _bytechar(1);
+	}
+	array atext = _strsplit(text, _bytechar(1));
+	_writetext(path, atext, "utf8");
 }
