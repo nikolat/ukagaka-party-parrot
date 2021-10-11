@@ -245,6 +245,14 @@ array get_rect(int scope)
 	return {(int)r[0], (int)r[1], (int)r[2], (int)r[3]};
 }
 
+string OnInstallBegin(dict ref)
+{
+	dance = 0;
+}
+string OnInstallFailure(dict ref)
+{
+	dance = 1;
+}
 string OnInstallComplete(dict ref)
 {
 	if (ref["Reference0"] == "supplement")
@@ -256,6 +264,7 @@ string OnInstallComplete(dict ref)
 			return "\![change,ghost," + _systemdict["OnNotifySelfInfo"]["Reference1"] + "]\e";
 		}
 	}
+	dance = 1;
 }
 int move_images(int scope)
 {
