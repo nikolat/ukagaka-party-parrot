@@ -127,11 +127,19 @@ string OnMouseDragEnd(dict ref)
 		is_too_high = 1;
 	string s = "\p[" + scope + "]";
 	s += "\![move,--Y=" + (display_height - surface_height[scope]) + ",--time=" + (1000 * CHECK_MOUSE_INTERVAL) + "]";
-	if (is_too_high && scope > 0)
+	if (is_too_high)
 	{
 		dance = 0;
-		delete_scope(scope);
-		s += "\i[0]\_w[1000]\![change,ghost," + _systemdict["OnNotifySelfInfo"]["Reference1"] + "]";
+		s += "\i[0]\_w[1000]";
+		if (maxscope == 0)
+		{
+			s += "\![vanishbymyself]";
+		}
+		else
+		{
+			delete_scope(scope);
+			s += "\![change,ghost," + _systemdict["OnNotifySelfInfo"]["Reference1"] + "]";
+		}
 	}
 	else
 	{
