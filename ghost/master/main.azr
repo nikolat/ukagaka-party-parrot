@@ -1,6 +1,7 @@
 int unloaded = 0;
 int display_width = -1;
-int dance = 1;
+int display_height = -1;
+int dance = 0;
 int maxscope = 0;
 array isdragging;
 array surface_width;
@@ -66,6 +67,7 @@ int ASEARCH(string key, array ary)
 OnDisplayChange(dict ref)
 {
 	display_width = ref["Reference1"];
+	display_height = ref["Reference2"];
 }
 
 string OnFirstBoot()          { return show_scope_all() + "\e"; }
@@ -83,6 +85,7 @@ string show_scope_all()
 	{
 		s += "\p[" + i + "]\s[" + (10 * i) + "]";
 	}
+	dance = 1;
 	return s;
 }
 
@@ -117,8 +120,31 @@ string OnMouseDragStart(dict ref)
 string OnMouseDragEnd(dict ref)
 {
 	int scope = ref["Reference3"];
-	isdragging[scope] = 0;
-	return "\p[" + scope + "]\![set,alignmenttodesktop,default]\![set,scaling,,100]\e";
+	dict d = _mousepos();
+	int my = d["y"];
+	int is_too_high = 0;
+	if (my * 8 < display_height)
+		is_too_high = 1;
+	string s = "\p[" + scope + "]";
+	s += "\![move,--Y=" + (display_height - surface_height[scope]) + ",--time=" + (1000 * CHECK_MOUSE_INTERVAL) + "]";
+	if (is_too_high && scope > 0)
+	{
+		dance = 0;
+		delete_scope(scope);
+		s += "\i[0]\_w[1000]\![change,ghost," + _systemdict["OnNotifySelfInfo"]["Reference1"] + "]";
+	}
+	else
+	{
+		s += "\![set,alignmenttodesktop,default]\![set,scaling,,100]";
+		s += "\![notify,OnPartyParrotSetDragging," + scope + ",0]";
+	}
+	return s + "\e";
+}
+OnPartyParrotSetDragging(dict ref)
+{
+	int scope = ref["Reference0"];
+	int n = ref["Reference1"];
+	isdragging[scope] = n;
 }
 
 string OnSecondChange(dict ref)
@@ -261,7 +287,7 @@ string OnInstallComplete(dict ref)
 		if (move_images(scope))
 		{
 			make_surfaces_txt(scope);
-			return "\![change,ghost," + _systemdict["OnNotifySelfInfo"]["Reference1"] + "]\e";
+			return "\_w[1000]\![change,ghost," + _systemdict["OnNotifySelfInfo"]["Reference1"] + "]\e";
 		}
 	}
 	dance = 1;
@@ -330,4 +356,19 @@ make_surfaces_txt(int scope)
 	}
 	array atext = _strsplit(text, _bytechar(1));
 	_writetext(path, atext, "utf8");
+}
+
+delete_scope(int scope)
+{
+	string directory = "..\..\shell\master\\" + fill2(scope);
+	_ddelete(directory);
+	for (int i = scope; i < maxscope; i++)
+	{
+		string path_from = "..\..\shell\master\\" + fill2(i + 1);
+		string path_to = "..\..\shell\master\\" + fill2(i);
+		_fmove(path_from, path_to);
+	}
+
+	string file = "..\..\shell\master\surfaces" + fill2(maxscope) + ".txt";
+	_fdelete(file);
 }
