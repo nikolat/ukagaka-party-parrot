@@ -229,7 +229,7 @@ string run_away(int scope)
 	int max = display_width - (surface_width[scope] / 2);
 	if (nx > max)
 		nx = max;
-	else if (nx - (surface_width[scope] / 2) < 0)
+	else if (nx < surface_width[scope] / 2)
 		nx = surface_width[scope] / 2;
 	string s;
 	if (mx < px && !ismouseleft[scope])
@@ -302,18 +302,18 @@ string OnInstallComplete(dict ref)
 }
 int move_images(int scope)
 {
-	string directory = "..\..\shell\master\\" + fill2(scope);
+	string basepath = "..\..\\";
+	string directory = basepath + "shell\master\\" + fill2(scope);
 	_dcreate(directory);
-	string path = "..\..\\";
-	dict d = _fenum(path);
+	dict d = _fenum(basepath);
 	array files = d["file"];
 	int count = 0;
 	for (int i = 0; files[i] != nil; i++)
 	{
 		if (_regex_match(files[i], "^\d+\.png$"))
 		{
-			string path_from = path + files[i];
-			string path_to = path + "shell\master\\" + fill2(scope) + "\\" + files[i];
+			string path_from = basepath + files[i];
+			string path_to = directory + "\\" + files[i];
 			_fmove(path_from, path_to);
 			count++;
 		}
@@ -329,54 +329,56 @@ make_surfaces_txt(int scope)
 {
 	string ns = fill2(scope);
 	string path = "..\..\shell\master\surfaces" + ns + ".txt";
+	string sep = _bytechar(1);
 	string text = ""
-		+ "charset,UTF-8" + _bytechar(1)
-		+ "" + _bytechar(1)
-		+ "descript" + _bytechar(1)
-		+ "{" + _bytechar(1)
-		+ "version,1" + _bytechar(1)
-		+ "}" + _bytechar(1)
-		+ "" + _bytechar(1)
-		+ "surface" + (10 * scope) + _bytechar(1)
-		+ "{" + _bytechar(1)
-		+ "element0,base," + ns + "/0.png,0,0" + _bytechar(1)
-		+ "" + _bytechar(1)
-		+ "animation0.interval,never" + _bytechar(1)
-		+ "animation0.pattern0,stop,2" + _bytechar(1)
-		+ "" + _bytechar(1)
-		+ "animation1.interval,never" + _bytechar(1)
-		+ "animation1.pattern0,start,2" + _bytechar(1)
-		+ "" + _bytechar(1)
-		+ "animation2.interval,always" + _bytechar(1);
+		+ "charset,UTF-8" + sep
+		+ "" + sep
+		+ "descript" + sep
+		+ "{" + sep
+		+ "version,1" + sep
+		+ "}" + sep
+		+ "" + sep
+		+ "surface" + (10 * scope) + sep
+		+ "{" + sep
+		+ "element0,base," + ns + "/0.png,0,0" + sep
+		+ "" + sep
+		+ "animation0.interval,never" + sep
+		+ "animation0.pattern0,stop,2" + sep
+		+ "" + sep
+		+ "animation1.interval,never" + sep
+		+ "animation1.pattern0,start,2" + sep
+		+ "" + sep
+		+ "animation2.interval,always" + sep;
 	for (int i = 0; i < 9; i++)
 	{
-		text += "animation2.pattern" + i + ",replace,1" + ns + fill2(i + 1) + ",50,0,0" + _bytechar(1);
+		text += "animation2.pattern" + i + ",replace,1" + ns + fill2(i + 1) + ",50,0,0" + sep;
 	}
-	text += "animation2.pattern9,replace," + (10 * scope) + ",50,0,0" + _bytechar(1)
-		+ "}" + _bytechar(1)
-		+ "" + _bytechar(1);
+	text += "animation2.pattern9,replace," + (10 * scope) + ",50,0,0" + sep
+		+ "}" + sep
+		+ "" + sep;
 	for (int i = 0; i < 9; i++)
 	{
-		text += "surface1" + ns + fill2(i + 1) + _bytechar(1)
-			+ "{" + _bytechar(1)
-			+ "element0,base," + ns + "/" + (i + 1) + ".png,0,0" + _bytechar(1)
-			+ "}" + _bytechar(1);
+		text += "surface1" + ns + fill2(i + 1) + sep
+			+ "{" + sep
+			+ "element0,base," + ns + "/" + (i + 1) + ".png,0,0" + sep
+			+ "}" + sep;
 	}
-	array atext = _strsplit(text, _bytechar(1));
+	array atext = _strsplit(text, sep);
 	_writetext(path, atext, "utf8");
 }
 
 delete_scope(int scope)
 {
-	string directory = "..\..\shell\master\\" + fill2(scope);
+	string basepath = "..\..\shell\master\\";
+	string directory = basepath + fill2(scope);
 	_ddelete(directory);
 	for (int i = scope; i < maxscope; i++)
 	{
-		string path_from = "..\..\shell\master\\" + fill2(i + 1);
-		string path_to = "..\..\shell\master\\" + fill2(i);
+		string path_from = basepath + fill2(i + 1);
+		string path_to = basepath + fill2(i);
 		_fmove(path_from, path_to);
 	}
 
-	string file = "..\..\shell\master\surfaces" + fill2(maxscope) + ".txt";
+	string file = basepath + "surfaces" + fill2(maxscope) + ".txt";
 	_fdelete(file);
 }
