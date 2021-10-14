@@ -2,6 +2,7 @@ int unloaded = 0;
 int display_width = -1;
 int display_height = -1;
 int dance = 0;
+int saved_dance = 0;
 int maxscope = 0;
 array isdragging;
 array surface_width;
@@ -76,24 +77,50 @@ string OnGhostChanged()       { return show_scope_all() + "\e"; }
 string OnShellChanged()       { return show_scope_all() + "\e"; }
 string OnWindowStateRestore() { return show_scope_all() + "\e"; }
 string OnSurfaceRestore()     { return ""; }
-string OnClose()              { return "\-\e"; }
-
+string OnClose()
+{
+	dance = 0;
+	unloaded = 1;
+	return "\_w[1000]\-\e";
+}
 string show_scope_all()
 {
+	dance = 1;
 	string s;
 	for (int i = 0; i <= maxscope; i++)
 	{
 		s += "\p[" + i + "]\s[" + (10 * i) + "]";
 	}
-	dance = 1;
 	return s;
 }
 
-string OnUpdateBegin()            { return show_update_info("Update Begin.") + "\e"; }
-string OnUpdateReady()            { return show_update_info("Updating...") + "\e"; }
-string OnUpdateComplete(dict ref) { return show_update_info(ref["Reference0"]) + "\e"; }
-string OnUpdateFailure(dict ref)  { return show_update_info(ref["Reference0"]) + "\e"; }
-
+string OnUpdateBegin()
+{
+	saved_dance = dance;
+	dance = 0;
+	return show_update_info("Update Begin.") + "\e";
+}
+string OnUpdateReady()
+{
+	return show_update_info("Updating...") + "\e";
+}
+string OnUpdateComplete(dict ref)
+{
+	string reason = ref["Reference0"];
+	string s;
+	if (reason == "none")
+		dance = saved_dance;
+	else if (reason == "changed")
+		s += show_scope_all();
+	s += show_update_info(reason) + "\e";
+	return s;
+}
+string OnUpdateFailure(dict ref)
+{
+	string reason = ref["Reference0"];
+	dance = saved_dance;
+	return show_update_info(reason) + "\e";
+}
 string show_update_info(string text)
 {
 	string title = "Network Update";
@@ -130,6 +157,7 @@ string OnMouseDragEnd(dict ref)
 	if (is_too_high)
 	{
 		dance = 0;
+		unloaded = 1;
 		s += "\i[0]\_w[1000]";
 		if (maxscope == 0)
 		{
@@ -281,11 +309,12 @@ array get_rect(int scope)
 
 string OnInstallBegin(dict ref)
 {
+	saved_dance = dance;
 	dance = 0;
 }
 string OnInstallFailure(dict ref)
 {
-	dance = 1;
+	dance = saved_dance;
 }
 string OnInstallComplete(dict ref)
 {
@@ -294,11 +323,12 @@ string OnInstallComplete(dict ref)
 		int scope = maxscope + 1;
 		if (move_images(scope))
 		{
+			unloaded = 1;
 			make_surfaces_txt(scope);
 			return "\_w[1000]\![change,ghost," + _systemdict["OnNotifySelfInfo"]["Reference1"] + "]\e";
 		}
 	}
-	dance = 1;
+	dance = saved_dance;
 }
 int move_images(int scope)
 {
