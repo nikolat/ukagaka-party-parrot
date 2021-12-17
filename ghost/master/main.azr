@@ -4,6 +4,7 @@ int display_height = -1;
 int dance = 0;
 int saved_dance = 0;
 int maxscope = 0;
+int stayontop = 0;
 array isdragging;
 array surface_width;
 array surface_height;
@@ -98,11 +99,11 @@ string OnUpdateBegin()
 {
 	saved_dance = dance;
 	dance = 0;
-	return show_update_info("Update Begin.") + "\e";
+	return show_info("Network Update", "Update Begin.") + "\e";
 }
 string OnUpdateReady()
 {
-	return show_update_info("Updating...") + "\e";
+	return show_info("Network Update", "Updating...") + "\e";
 }
 string OnUpdateComplete(dict ref)
 {
@@ -112,18 +113,17 @@ string OnUpdateComplete(dict ref)
 		dance = saved_dance;
 	else if (reason == "changed")
 		s += show_scope_all();
-	s += show_update_info(reason) + "\e";
+	s += show_info("Network Update", reason) + "\e";
 	return s;
 }
 string OnUpdateFailure(dict ref)
 {
 	string reason = ref["Reference0"];
 	dance = saved_dance;
-	return show_update_info(reason) + "\e";
+	return show_info("Network Update", reason) + "\e";
 }
-string show_update_info(string text)
+string show_info(string title, string text)
 {
-	string title = "Network Update";
 	string icon = "info";
 	return "\![set,trayballoon,--icon=" + icon + ",--title=" + title + ",--text=" + text + "]";
 }
@@ -411,4 +411,26 @@ delete_scope(int scope)
 
 	string file = basepath + "surfaces" + fill2(maxscope) + ".txt";
 	_fdelete(file);
+}
+
+string OnKeyPress(dict ref)
+{
+	return _fncstr("key_" + ref["Reference0"], ref);
+}
+string key_t(dict ref)
+{
+	stayontop = !stayontop;
+	string s;
+	if (stayontop)
+	{
+		s += "\![set,windowstate,stayontop]";
+		s += show_info("Always on top", "ON");
+	}
+	else
+	{
+		s += "\![set,windowstate,!stayontop]";
+		s += show_info("Always on top", "OFF");
+	}
+	s += "\e";
+	return s;
 }
