@@ -5,16 +5,19 @@ int dance = 0;
 int saved_dance = 0;
 int maxscope = 0;
 int stayontop = 0;
+int icon_no = 0;
 array isdragging;
 array surface_width;
 array surface_height;
 array ismouseleft;
 double CHECK_MOUSE_INTERVAL = 0.125;
+double DANCE_ICON_INTERVAL = 2.000;
 int THRESHOLD_DISTANCE = 300;
 
 load()
 {
 	_saoriload("saori\HandUtil\HandUtil.dll", "HandUtil");
+	_saoriload("saori\ccpuid\ccpuid.dll", "ccpuid");
 	maxscope = count_scope();
 	for (int i = 0; i <= maxscope; i++)
 	{
@@ -24,10 +27,12 @@ load()
 		ismouseleft += 0;
 	}
 	_create_thread("TH_CheckMouse");
+	_create_thread("TH_DanceIcon");
 }
 unload()
 {
 	_saoriunload("HandUtil");
+	_saoriunload("ccpuid");
 	unloaded = 1;
 }
 
@@ -183,22 +188,34 @@ OnPartyParrotSetDragging(dict ref)
 	isdragging[scope] = n;
 }
 
-string OnSecondChange(dict ref)
+TH_DanceIcon()
 {
-	if (!dance)
-		return "";
-	return dance_icon() + "\e";
+	while(1)
+	{
+		if (unloaded)
+			break;
+		if (dance)
+		{
+			string s = dance_icon();
+			if (s != "")
+				_speak(s);
+		}
+		_sleep(DANCE_ICON_INTERVAL);
+	}
 }
 string dance_icon()
 {
+	dict d = _saorirequest("ccpuid", "cpu.usage");
+	int cpu_usage = d["Result"];
+	int offset = 30;
+	int wait = offset + 50 - (cpu_usage / 2);
 	string s = "";
-	for (int i = 0; i < 10; i++)
+	for (int t = 0; t < 1000 * DANCE_ICON_INTERVAL; t += wait)
 	{
-		s += "\![set,tasktrayicon,icon/parrot" + i + ".ico]";
-		if (i < 9)
-			s += "\_w[50]";
+		s += "\![set,tasktrayicon,icon/parrot" + icon_no + ".ico]";
+		s += "\_w[" + wait + "]";
+		icon_no = (icon_no + 1) % 10;
 	}
-	s += "\_w[50]" + s;
 	return s;
 }
 
