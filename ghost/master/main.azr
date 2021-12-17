@@ -4,16 +4,20 @@ int display_height = -1;
 int dance = 0;
 int saved_dance = 0;
 int maxscope = 0;
+int stayontop = 0;
+int icon_no = 0;
 array isdragging;
 array surface_width;
 array surface_height;
 array ismouseleft;
 double CHECK_MOUSE_INTERVAL = 0.125;
+double DANCE_ICON_INTERVAL = 2.000;
 int THRESHOLD_DISTANCE = 300;
 
 load()
 {
 	_saoriload("saori\HandUtil\HandUtil.dll", "HandUtil");
+	_saoriload("saori\ccpuid\ccpuid.dll", "ccpuid");
 	maxscope = count_scope();
 	for (int i = 0; i <= maxscope; i++)
 	{
@@ -23,10 +27,12 @@ load()
 		ismouseleft += 0;
 	}
 	_create_thread("TH_CheckMouse");
+	_create_thread("TH_DanceIcon");
 }
 unload()
 {
 	_saoriunload("HandUtil");
+	_saoriunload("ccpuid");
 	unloaded = 1;
 }
 
@@ -98,11 +104,11 @@ string OnUpdateBegin()
 {
 	saved_dance = dance;
 	dance = 0;
-	return show_update_info("Update Begin.") + "\e";
+	return show_info("Network Update", "Update Begin.") + "\e";
 }
 string OnUpdateReady()
 {
-	return show_update_info("Updating...") + "\e";
+	return show_info("Network Update", "Updating...") + "\e";
 }
 string OnUpdateComplete(dict ref)
 {
@@ -112,18 +118,17 @@ string OnUpdateComplete(dict ref)
 		dance = saved_dance;
 	else if (reason == "changed")
 		s += show_scope_all();
-	s += show_update_info(reason) + "\e";
+	s += show_info("Network Update", reason) + "\e";
 	return s;
 }
 string OnUpdateFailure(dict ref)
 {
 	string reason = ref["Reference0"];
 	dance = saved_dance;
-	return show_update_info(reason) + "\e";
+	return show_info("Network Update", reason) + "\e";
 }
-string show_update_info(string text)
+string show_info(string title, string text)
 {
-	string title = "Network Update";
 	string icon = "info";
 	return "\![set,trayballoon,--icon=" + icon + ",--title=" + title + ",--text=" + text + "]";
 }
@@ -183,22 +188,34 @@ OnPartyParrotSetDragging(dict ref)
 	isdragging[scope] = n;
 }
 
-string OnSecondChange(dict ref)
+TH_DanceIcon()
 {
-	if (!dance)
-		return "";
-	return dance_icon() + "\e";
+	while(1)
+	{
+		if (unloaded)
+			break;
+		if (dance)
+		{
+			string s = dance_icon();
+			if (s != "")
+				_speak(s);
+		}
+		_sleep(DANCE_ICON_INTERVAL);
+	}
 }
 string dance_icon()
 {
+	dict d = _saorirequest("ccpuid", "cpu.usage");
+	int cpu_usage = d["Result"];
+	int offset = 30;
+	int wait = offset + 50 - (cpu_usage / 2);
 	string s = "";
-	for (int i = 0; i < 10; i++)
+	for (int t = 0; t < 1000 * DANCE_ICON_INTERVAL; t += wait)
 	{
-		s += "\![set,tasktrayicon,icon/parrot" + i + ".ico]";
-		if (i < 9)
-			s += "\_w[50]";
+		s += "\![set,tasktrayicon,icon/parrot" + icon_no + ".ico]";
+		s += "\_w[" + wait + "]";
+		icon_no = (icon_no + 1) % 10;
 	}
-	s += "\_w[50]" + s;
 	return s;
 }
 
@@ -411,4 +428,26 @@ delete_scope(int scope)
 
 	string file = basepath + "surfaces" + fill2(maxscope) + ".txt";
 	_fdelete(file);
+}
+
+string OnKeyPress(dict ref)
+{
+	return _fncstr("key_" + ref["Reference0"], ref);
+}
+string key_t(dict ref)
+{
+	stayontop = !stayontop;
+	string s;
+	if (stayontop)
+	{
+		s += "\![set,windowstate,stayontop]";
+		s += show_info("Always on top", "ON");
+	}
+	else
+	{
+		s += "\![set,windowstate,!stayontop]";
+		s += show_info("Always on top", "OFF");
+	}
+	s += "\e";
+	return s;
 }
