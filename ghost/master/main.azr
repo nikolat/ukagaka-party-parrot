@@ -6,12 +6,13 @@ int saved_dance = 0;
 int maxscope = 0;
 int stayontop = 0;
 int icon_no = 0;
+double wait_dance = 0.050;
 array isdragging;
 array surface_width;
 array surface_height;
 array ismouseleft;
 double CHECK_MOUSE_INTERVAL = 0.125;
-double DANCE_ICON_INTERVAL = 2.000;
+double CHECK_CPU_INTERVAL = 1.000;
 int THRESHOLD_DISTANCE = 300;
 
 load()
@@ -27,6 +28,7 @@ load()
 		ismouseleft += 0;
 	}
 	_create_thread("TH_CheckMouse");
+	_create_thread("TH_CheckCPU");
 	_create_thread("TH_DanceIcon");
 }
 unload()
@@ -188,6 +190,23 @@ OnPartyParrotSetDragging(dict ref)
 	isdragging[scope] = n;
 }
 
+TH_CheckCPU()
+{
+	while(1)
+	{
+		if (unloaded)
+			break;
+		if (dance)
+		{
+			dict d = _saorirequest("ccpuid", "cpu.usage");
+			int cpu_usage = d["Result"];
+			int offset = 30;
+			wait_dance = (1.0 * offset + 50 - (cpu_usage / 2)) / 1000;
+		}
+		_sleep(CHECK_CPU_INTERVAL);
+	}
+}
+
 TH_DanceIcon()
 {
 	while(1)
@@ -200,22 +219,14 @@ TH_DanceIcon()
 			if (s != "")
 				_speak(s);
 		}
-		_sleep(DANCE_ICON_INTERVAL);
+		_sleep(wait_dance);
 	}
 }
 string dance_icon()
 {
-	dict d = _saorirequest("ccpuid", "cpu.usage");
-	int cpu_usage = d["Result"];
-	int offset = 30;
-	int wait = offset + 50 - (cpu_usage / 2);
 	string s = "";
-	for (int t = 0; t < 1000 * DANCE_ICON_INTERVAL; t += wait)
-	{
-		s += "\![set,tasktrayicon,icon/parrot" + icon_no + ".ico]";
-		s += "\_w[" + wait + "]";
-		icon_no = (icon_no + 1) % 10;
-	}
+	s += "\![set,tasktrayicon,icon/parrot" + icon_no + ".ico]";
+	icon_no = (icon_no + 1) % 10;
 	return s;
 }
 
