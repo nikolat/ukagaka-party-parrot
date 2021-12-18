@@ -224,6 +224,11 @@ TH_DanceIcon()
 }
 string dance_icon()
 {
+	for (int scope = 0; scope <= maxscope; scope++)
+	{
+		if (isdragging[scope])
+			return "";
+	}
 	string s = "";
 	s += "\![set,tasktrayicon,icon/parrot" + icon_no + ".ico]";
 	icon_no = (icon_no + 1) % 10;
