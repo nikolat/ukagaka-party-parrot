@@ -2,6 +2,7 @@ int unloaded = 0;
 int display_width = -1;
 int display_height = -1;
 int dance = 0;
+int dance_speed = 1;
 int saved_dance = 0;
 int maxscope = 0;
 int stayontop = 0;
@@ -79,11 +80,11 @@ OnDisplayChange(dict ref)
 	display_height = ref["Reference2"];
 }
 
-string OnFirstBoot()          { return show_scope_all() + "\e"; }
-string OnBoot()               { return show_scope_all() + "\e"; }
-string OnGhostChanged()       { return show_scope_all() + "\e"; }
-string OnShellChanged()       { return show_scope_all() + "\e"; }
-string OnWindowStateRestore() { return show_scope_all() + "\e"; }
+string OnFirstBoot()          { return dance_all() + "\e"; }
+string OnBoot()               { return dance_all() + "\e"; }
+string OnGhostChanged()       { return dance_all() + "\e"; }
+string OnShellChanged()       { return dance_all() + "\e"; }
+string OnWindowStateRestore() { return dance_all() + "\e"; }
 string OnSurfaceRestore()     { return ""; }
 string OnClose()
 {
@@ -91,13 +92,17 @@ string OnClose()
 	unloaded = 1;
 	return "\_w[1000]\-\e";
 }
-string show_scope_all()
+string dance_all()
 {
 	dance = 1;
+	return show_scope_all();
+}
+string show_scope_all()
+{
 	string s;
 	for (int i = 0; i <= maxscope; i++)
 	{
-		s += "\p[" + i + "]\s[" + (10 * i) + "]";
+		s += "\p[" + i + "]\s[" + (10 * i) + "]\i[" + dance_speed + "]";
 	}
 	return s;
 }
@@ -119,7 +124,7 @@ string OnUpdateComplete(dict ref)
 	if (reason == "none")
 		dance = saved_dance;
 	else if (reason == "changed")
-		s += show_scope_all();
+		s += dance_all();
 	s += show_info("Network Update", reason) + "\e";
 	return s;
 }
@@ -139,9 +144,19 @@ string OnMouseDoubleClick(dict ref)
 {
 	dance = !dance;
 	string s;
-	for (int i = 0; i <= maxscope; i++)
+	if (dance)
 	{
-		s += "\p[" + i + "]\i[" + dance + "]";
+		for (int i = 0; i <= maxscope; i++)
+		{
+			s += "\p[" + i + "]\i[" + dance_speed + "]";
+		}
+	}
+	else
+	{
+		for (int i = 0; i <= maxscope; i++)
+		{
+			s += "\p[" + i + "]\i[0]";
+		}
 	}
 	return s + "\e";
 }
@@ -202,6 +217,18 @@ TH_CheckCPU()
 			int cpu_usage = d["Result"];
 			int offset = 30;
 			wait_dance = (1.0 * offset + 50 - (cpu_usage / 2)) / 1000;
+			int next_speed;
+			if (cpu_usage < 25)
+				next_speed = 1;
+			else if (cpu_usage < 50)
+				next_speed = 2;
+			else
+				next_speed = 3;
+			if (dance_speed != next_speed)
+			{
+				dance_speed = next_speed;
+				_speak(show_scope_all());
+			}
 		}
 		_sleep(CHECK_CPU_INTERVAL);
 	}
@@ -406,18 +433,46 @@ make_surfaces_txt(int scope)
 		+ "element0,base," + ns + "/0.png,0,0" + sep
 		+ "" + sep
 		+ "animation0.interval,never" + sep
-		+ "animation0.pattern0,stop,2" + sep
+		+ "animation0.pattern0,stop,11" + sep
+		+ "animation0.pattern1,stop,12" + sep
+		+ "animation0.pattern2,stop,13" + sep
 		+ "" + sep
 		+ "animation1.interval,never" + sep
-		+ "animation1.pattern0,start,2" + sep
+		+ "animation1.pattern0,stop,12" + sep
+		+ "animation1.pattern1,stop,13" + sep
+		+ "animation1.pattern2,start,11" + sep
 		+ "" + sep
-		+ "animation2.interval,always" + sep;
+		+ "animation2.interval,never" + sep
+		+ "animation2.pattern0,stop,11" + sep
+		+ "animation2.pattern1,stop,13" + sep
+		+ "animation2.pattern2,start,12" + sep
+		+ "" + sep
+		+ "animation3.interval,never" + sep
+		+ "animation3.pattern0,stop,11" + sep
+		+ "animation3.pattern1,stop,12" + sep
+		+ "animation3.pattern2,start,13" + sep
+		+ "" + sep;
+	text += "animation11.interval,always" + sep;
 	for (int i = 0; i < 9; i++)
 	{
-		text += "animation2.pattern" + i + ",replace,1" + ns + fill2(i + 1) + ",50,0,0" + sep;
+		text += "animation11.pattern" + i + ",replace,1" + ns + fill2(i + 1) + ",50,0,0" + sep;
 	}
-	text += "animation2.pattern9,replace," + (10 * scope) + ",50,0,0" + sep
-		+ "}" + sep
+	text += "animation11.pattern9,replace," + (10 * scope) + ",50,0,0" + sep;
+	text += "" + sep;
+	text += "animation12.interval,always" + sep;
+	for (int i = 0; i < 9; i++)
+	{
+		text += "animation12.pattern" + i + ",replace,1" + ns + fill2(i + 1) + ",40,0,0" + sep;
+	}
+	text += "animation12.pattern9,replace," + (10 * scope) + ",40,0,0" + sep;
+	text += "" + sep;
+	text += "animation13.interval,always" + sep;
+	for (int i = 0; i < 9; i++)
+	{
+		text += "animation13.pattern" + i + ",replace,1" + ns + fill2(i + 1) + ",30,0,0" + sep;
+	}
+	text += "animation13.pattern9,replace," + (10 * scope) + ",30,0,0" + sep;
+	text +=  "}" + sep
 		+ "" + sep;
 	for (int i = 0; i < 9; i++)
 	{
