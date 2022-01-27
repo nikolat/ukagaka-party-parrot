@@ -30,7 +30,6 @@ load()
 	}
 	_create_thread("TH_CheckMouse");
 	_create_thread("TH_CheckCPU");
-	_create_thread("TH_DanceIcon");
 }
 unload()
 {
@@ -234,24 +233,11 @@ TH_CheckCPU()
 	}
 }
 
-TH_DanceIcon()
+string OnSecondChange(dict ref)
 {
-	while(1)
-	{
-		if (unloaded)
-			break;
-		int loop = 10;
-		if (dance && !is_dragging())
-		{
-			string s = dance_icon();
-			for (int i = 1; i < loop; i++)
-			{
-				s += "\_w[" + (1000 * wait_dance) + "]" + dance_icon();
-			}
-			_speak(s);
-		}
-		_sleep(loop * wait_dance);
-	}
+	if (dance && !is_dragging())
+		return "\![set,tasktrayicon,icon/parrot.ico,,--duration=" + (1000 * wait_dance) + "]";
+	return "";
 }
 int is_dragging()
 {
@@ -261,13 +247,6 @@ int is_dragging()
 			return 1;
 	}
 	return 0;
-}
-string dance_icon()
-{
-	string s = "";
-	s += "\![set,tasktrayicon,icon/parrot" + icon_no + ".ico]";
-	icon_no = (icon_no + 1) % 10;
-	return s;
 }
 
 TH_CheckMouse()
