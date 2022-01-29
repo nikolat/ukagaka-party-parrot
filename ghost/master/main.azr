@@ -7,7 +7,8 @@ int saved_dance = 0;
 int maxscope = 0;
 int stayontop = 0;
 int icon_no = 0;
-double wait_dance = 0.050;
+double wait_dance = 0.080;
+double wait_dance_saved = 0.080;
 array isdragging;
 array surface_width;
 array surface_height;
@@ -30,6 +31,7 @@ load()
 	}
 	_create_thread("TH_CheckMouse");
 	_create_thread("TH_CheckCPU");
+	_create_thread("TH_DanceIcon");
 }
 unload()
 {
@@ -214,8 +216,9 @@ TH_CheckCPU()
 		{
 			dict d = _saorirequest("ccpuid", "cpu.usage");
 			int cpu_usage = d["Result"];
-			int offset = 30;
-			wait_dance = (1.0 * offset + 50 - (cpu_usage / 2)) / 1000;
+			wait_dance = _floor(1.0 * (100 - cpu_usage) / 10) / 100;
+			if (wait_dance < 0.02)
+				wait_dance = 0.02;
 			int next_speed;
 			if (cpu_usage < 25)
 				next_speed = 1;
@@ -233,11 +236,23 @@ TH_CheckCPU()
 	}
 }
 
-string OnSecondChange(dict ref)
+TH_DanceIcon()
 {
-	if (dance && !is_dragging())
-		return "\![set,tasktrayicon,icon/parrot.ico,,--duration=" + (1000 * wait_dance) + "]";
-	return "";
+	while(1)
+	{
+		if (unloaded)
+			break;
+		if (dance && !is_dragging())
+		{
+			if (_fabs(wait_dance_saved - wait_dance) > 0.015)//anti-chattering
+			{
+				wait_dance_saved = wait_dance;
+				string s = "\![set,tasktrayicon,icon/parrot.ico,,--duration=" + (1000 * wait_dance) + "]";
+				_speak(s);
+			}
+		}
+		_sleep(CHECK_CPU_INTERVAL);
+	}
 }
 int is_dragging()
 {
