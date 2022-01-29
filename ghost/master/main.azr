@@ -8,7 +8,7 @@ int maxscope = 0;
 int stayontop = 0;
 int icon_no = 0;
 double wait_dance = 0.080;
-double wait_dance_saved = 0.080;
+double wait_dance_saved = 0.000;
 array isdragging;
 array surface_width;
 array surface_height;
