@@ -19,7 +19,7 @@ file,ghost/master/saori/ccpuid/README.txt13207f817c358b9a0e9f2c9720426539size=
 file,ghost/master/saori/ccpuid/ccpuid.dlle0d0a436ef3d2ae6624cb1077964ce93size=66560date=2012-12-21T00:00:00
 file,ghost/master/saori/ccpuid/saori_cpuid_README.txtf18ad2c8113806d81644c05438292844size=4247date=2012-12-21T00:00:00
 file,install.txt9cdd514a3d5728bfd40c95ef0ba41bfesize=66date=2012-12-21T00:00:00
-file,readme.txt5ccb326092c97b8d441124075d78815dsize=1674date=2012-12-21T00:00:00
+file,readme.txt2b0fcec4003e34ecb71a643924ab5bc7size=1670date=2012-12-21T00:00:00
 file,shell/master/00/0.pngfd9a12b0369ba5430428bbb1ce5ef47esize=2314date=2012-12-21T00:00:00
 file,shell/master/00/1.png0565046f7553ce697c137c46fa0c342csize=2264date=2012-12-21T00:00:00
 file,shell/master/00/2.pngf04bba061d4dad544bcbeab57292bfedsize=2281date=2012-12-21T00:00:00
