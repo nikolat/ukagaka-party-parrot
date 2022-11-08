@@ -35,7 +35,7 @@ array TH.AI.PreFlop(array _action)
 			_ret += "call";
 		}
 		else {
-			_ret += "raise"
+			_ret += "raise";
 			_ret += TH.blind * 2;
 		}
 	}
