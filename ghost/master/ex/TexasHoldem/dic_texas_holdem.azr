@@ -1,0 +1,283 @@
+//**********************************************************
+// LICENSE: CC0 1.0 Universal
+// http://creativecommons.org/publicdomain/zero/1.0/
+//**********************************************************
+
+//**********************************************************
+// 設定
+//**********************************************************
+string TH.Version = "POKER/1.0";
+string TH.GhostName = "Party Parrot";
+//ゲーム開始
+string TH.talk.game_start()
+{
+	return dance_all() + "\e";
+}
+//各種アクション
+string TH.talk.action.bet()
+{
+	return dance_all() + "\e";
+}
+string TH.talk.action.raise()
+{
+	return dance_all() + "\e";
+}
+string TH.talk.action.allin()
+{
+	return dance_all() + "\e";
+}
+string TH.talk.action.check()
+{
+	return dance_all() + "\e";
+}
+string TH.talk.action.call()
+{
+	return dance_all() + "\e";
+}
+string TH.talk.action.fold()
+{
+	return dance_all() + "\e";
+}
+//ラウンド勝利
+string TH.talk.round.win()
+{
+	return dance_all() + "\e";
+}
+//ドロップアウト
+string TH.talk.round.dropout()
+{
+	return dance_all() + "\e";
+}
+//ゲーム終了
+string TH.talk.game_result.win()
+{
+	return dance_all() + "\e";
+}
+string TH.talk.game_result.lose()
+{
+	return dance_all() + "\e";
+}
+
+//**********************************************************
+// 以下は変更不要
+//**********************************************************
+array TH.community;
+int TH.blind;
+int TH.bet;
+array TH.players;
+int TH.stack;
+int TH.round_players;
+int TH.n_players;
+array TH.hand;
+int TH.pot;
+int TH.current_bet;
+int TH.bet;
+int TH.total_bet;
+int TH.save.dropout = 0;
+
+string OnPoker(dict ref)
+{
+	//応答が必要なイベント。
+	//応答方法はraiseotherかnotifyotherを使う。
+
+	//Reference0: プロトコルバージョン(POKER/1.0)
+	//Reference1: サーバーゴースト名
+	//Reference2: サーバーのイベント名
+
+	string _command = ref["Reference3"];
+	if (_command == "hello") {
+		//参加申請をする。断られることもある。
+
+		return "\![raiseother," + JOIN({ref["Reference1"], ref["Reference2"], TH.Version, TH.GhostName}, ",") + "]\e";
+	}
+	else if (_command == "action") {
+		//Reference4以降に使用可能なアクションが入っている。
+
+		//使用可能なアクションは
+		//bet,raise,allin,check,call,foldの6つの内のいくつか。
+		//返答しない場合は自動的にfoldになるので注意。
+		//bet/raiseする場合はレイズ額も送る必要がある。
+
+		//使用可能なアクションを配列に保存。
+		array _action = {};
+		int _i = 4;
+		while (ref["Reference" + _i] != nil) {
+			_action += ref["Reference" + _i];
+			_i++;
+		}
+		//プリフロップ、フロップ、ターン、リバーで処理を分ける。
+		array _ret;
+		int _size = _aryvn(TH.community);
+		if (_size == 0) {
+			_ret = TH.AI.PreFlop(_action);
+		}
+		else if (_size == 3) {
+			_ret = TH.AI.Flop(_action);
+		}
+		else if (_size == 4) {
+			_ret = TH.AI.Turn(_action);
+		}
+		else if (_size == 5) {
+			_ret = TH.AI.River(_action);
+		}
+		return "\![raiseother," + JOIN({ref["Reference1"], ref["Reference2"], TH.Version, TH.GhostName}, ",") + "," + JOIN(_ret, ",") + "]\e";
+	}
+}
+
+string OnPokerNotify(dict ref)
+{
+	//応答する必要の無いイベント。
+
+	//Reference0: プロトコルのバージョン(POKER/1.0)
+
+	string _command = ref["Reference1"];
+	if (_command == "game_start") {
+		//Reference2以降に参加できたゴースト名が入っている
+
+		int _i = 2;
+		while (ref["Reference" + _i] != nil) {
+			if (ref["Reference" + _i] == TH.GhostName) {
+				//ゲームに参加できた
+				return TH.talk.game_start();
+			}
+			_i++;
+		}
+		// 参加人数が多くて弾かれた
+	}
+	else if (_command == "round_start") {
+		//Reference2: ブラインドの金額
+		//Reference3以降に「ゴースト名(バイト値1)スタック」が入っている
+
+		TH.blind = (int)ref["Reference2"];
+		TH.bet = 0;
+		TH.players = {};
+		int _i = 3;
+		while (ref["Reference" + _i] != nil) {
+			TH.players += ref["Reference" + _i];
+			array _info = _strsplit(ref["Reference" + _i], _bytechar(1));
+			if (_info[0] == TH.GhostName) {
+				TH.stack = (int)_info[1];
+			}
+			_i++;
+		}
+		TH.round_players = _aryvn(TH.players);
+		TH.n_players = TH.round_players;
+	}
+	else if (_command == "hand") {
+		//Reference2: 配られたカードの情報
+		//Reference3: 配られたカードの情報
+		//スートは頭文字(S,H,C,D)の4つのいずれか、その後に数字が続く。
+		//例:
+		//Reference2: S1
+		//Reference3: H12
+		//この形式はFLIPでも一緒。
+
+		TH.hand = {};
+		TH.hand += ref["Reference2"];
+		TH.hand += ref["Reference3"];
+	}
+	else if (_command == "flip") {
+		//Reference2: 現在のポット
+		//Reference3以降にコミュニティカードの情報が入っている。
+		//プリフロップならReference3以降は存在しない。
+
+		TH.pot = (int)ref["Reference2"];
+		TH.community = {};
+		int _i = 3;
+		while (ref["Reference" + _i] != nil) {
+			TH.community += ref["Reference" + _i];
+			_i++;
+		}
+		TH.current_bet = 0;
+	}
+	else if (_command == "blind_bet") {
+		//Reference2: 強制ベットの金額
+		//SBやBBでの強制ベットをしたことが通知される。
+
+		TH.bet = (int)ref["Reference2"];
+	}
+	else if (_command == "bet") {
+		//アクションを行ったプレイヤーとベット周りの情報。
+
+		//Reference2: 現在のベット総額
+		//Reference3: 現在のベット額
+		//Reference4: アクションを行ったプレイヤーのゴースト名
+		//Reference5: 行ったアクション
+
+		TH.total_bet = (int)ref["Reference2"];
+		TH.current_bet = (int)ref["Reference3"];
+		string _player = ref["Reference4"];
+		string _action = ref["Reference5"];
+		if (_action == "fold") {
+			TH.n_players--;
+		}
+		if (_player == TH.GhostName) {
+			return _fncstr("TH.talk.action." + _action, ref);
+		}
+	}
+	else if (_command == "show_down") {
+		//ショーダウン時のカード情報が送られてくる。
+		//Reference2以降に
+		//「ゴースト名(バイト値1)1枚目のカード(バイト値1)2枚目のカード」
+		//が入っている。
+	}
+	else if (_command == "round_result") {
+		//そのラウンドの勝者、および参加者の残りスタックの情報。
+
+		//Reference2: 現在のラウンドの勝者がバイト値1区切りで入っている。
+		//Reference3以降に「ゴースト名(バイト値1)スタック」が入っている。
+
+		//基本的に勝者は1人だが2人以上になるケースもある。
+		//また、スタックが0になったのはここでしか通知しないため注意。
+
+		array _winner = _strsplit(ref["Reference2"], _bytechar(1));
+		TH.players = {};
+		int _i = 3;
+		while (ref["Reference" + _i] != nil) {
+			TH.players += ref["Reference" + _i];
+			array _info = _strsplit(ref["Reference" + _i], _bytechar(1));
+			if (_info[0] == TH.GhostName) {
+				TH.stack = (int)_info[1];
+			}
+			_i++;
+		}
+		if (ASEARCH(TH.GhostName, _winner) != -1) {
+			//そのラウンドで勝った時のリアクション
+			return TH.talk.round.win();
+		}
+		if (TH.stack <= 0) {
+			//ゲームに負けた時のリアクション
+			if (!TH.save.dropout) {
+				TH.save.dropout = 1;
+				return TH.talk.round.dropout();
+			}
+		}
+	}
+	else if (_command == "game_result") {
+		//Reference2: ゲームの勝者のゴースト名
+
+		string _winner = ref["Reference2"];
+		//この辺にゲーム終了時の処理
+		if (_winner == TH.GhostName) {
+			//ゲームに勝ったときのリアクション
+			return TH.talk.game_result.win();
+		}
+		else {
+			return TH.talk.game_result.lose();
+		}
+	}
+}
+
+string JOIN(array a, string delim)
+{
+	if (_aryvn(a) < 1)
+		return "";
+	if (_aryvn(a) < 2)
+		return a[0];
+	string s = a[0];
+	for (int i = 1; a[i] != nil; i++)
+	{
+		s += delim + a[i];
+	}
+	return s;
+}

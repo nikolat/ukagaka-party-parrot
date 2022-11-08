@@ -1,0 +1,266 @@
+
+int TH.Hand.None = 0;
+int TH.Hand.HighCards = 1;
+int TH.Hand.OnePair = 2;
+int TH.Hand.TwoPair = 3;
+int TH.Hand.ThreeOfAKind = 4;
+int TH.Hand.Straight = 5;
+int TH.Hand.Flush = 6;
+int TH.Hand.FullHouse = 7;
+int TH.Hand.FourOfAKind = 8;
+int TH.Hand.StraightFlush = 9;
+
+int TH.strength;
+
+array TH.AI.PreFlop(array _action)
+{
+	array _ret = {};
+	string _h1_suit = _substr(TH.hand[0], 0, 1);
+	int _h1_num = (int)_substr(TH.hand[0], 1, 2);
+	string _h2_suit = _substr(TH.hand[1], 0, 1);
+	int _h2_num = (int)_substr(TH.hand[1], 1, 2);
+	int _vs_allin = 0;
+	// 条件式を楽に書けるようにするためのswap。
+	if (_h2_num == 1 || _h1_num < _h2_num) {
+		int _tmp  = _h1_num;
+		_h1_num = _h2_num;
+		_h2_num = _tmp;
+	}
+	// ペアハンドなら強いので出来るだけraiseしていく。
+	if (_h1_num == _h2_num) {
+		if (_h1_num == 1 || _h1_num >= 11) {
+			_vs_allin = 1;
+		}
+		if (TH.blind < TH.current_bet) {
+			_ret += "call";
+		}
+		else {
+			_ret += "raise"
+			_ret += TH.blind * 2;
+		}
+	}
+	// check出来るときはcheckする。
+	else if (ASEARCH("check", _action) != -1) {
+		_ret += "check";
+	}
+	// スーテッドのA-Anyならcallする。
+	else if (_h1_num == 1 && _h1_suit == _h2_suit && _h2_num >= 5) {
+		_vs_allin = 1;
+		_ret += "call";
+	}
+	// オフスートでも8以上ならcallする。
+	else if (_h1_num == 1 && _h2_num >= 8) {
+		if (_h2_num >= 11) {
+			_vs_allin = 1;
+		}
+		_ret += "call";
+	}
+	// TT以上ならcallする。
+	else if (_h1_num >= 10 && _h2_num >= 10) {
+		_ret += "call";
+	}
+	// まあまあなスーテッドコネクターならcallする。
+	else if (_h1_suit == _h2_suit && _h1_num + 1 == _h2_num && _h1_num >= 7) {
+		_ret += "call";
+	}
+
+	// 特に条件に当てはまらなければ降りる。
+	if (_aryvn(_ret) == 0) {
+		_ret += "fold";
+	}
+	// スタックがblindの10倍より低ければraise,callの代わりにall-inをする。
+	else if (TH.blind * 10 > TH.stack) {
+		_ret = {};
+		_ret += "allin";
+	}
+	// ベット額が高すぎる場合は一部の強い手を除いて降りる。
+	else if (TH.blind * 5 < TH.current_bet) {
+		if (vs_allin == 0) {
+			_ret = {};
+			_ret += "fold";
+		}
+	}
+	return _ret;
+}
+
+array TH.AI.Flop(array _action)
+{
+	array _ret = {};
+	int _hand_strength = (int)_saorirequest("TexasHoldemUtil", "hand", TH.hand[0], TH.hand[1])["result"];
+	int _community_strength = (int)_saorirequest("TexasHoldemUtil", "hand", TH.community[0], TH.community[1], TH.community[2])["result"];
+	int _strength = (int)_saorirequest("TexasHoldemUtil", "hand", TH.community[0], TH.community[1], TH.community[2], TH.hand[0], TH.hand[1])["result"];
+	// ベットされている場合はコミュニティカードとペアになっている可能性
+	// があるのでそれを想定した勝率を計算する。
+	float _rate = -1;
+	if (TH.current_bet > 0) {
+		array _list = {};
+		array suit = {"S", "H", "C", "D"};
+		for (int i = 0; suit[i] != nil; i++) {
+			string _s = suit[i];
+			int _num = (int)_substr(TH.community[0], 1, 2);
+			if (ASEARCH(_s + _num, _list) == -1) {
+				_list += _s + _num;
+			}
+		}
+		array _l = {};
+		_l = TH.hand;
+		for (int i = 0; TH.community[i] != nil; i++) {
+			_l += TH.community[i];
+		}
+		for (int i = 0; TH.community[i] != nil; i++) {
+			string _e = TH.community[i];
+			int _pos  = ASEARCH(_e, _list);
+			if (_pos != -1) {
+				_list[_pos] = nil;
+			}
+		}
+		if (ARRAYSIZE(_list) > 0) {
+			int _sum  = 0;
+			for (int i = 0; _list[i] != nil; i++) {
+				string _e = _list[i];
+				_rate = (float)_saorirequest("TexasHoldemUtil", "estimate", _aryvn(TH.community) , TH.community[0], TH.community[1], TH.community[2], TH.n_players, TH.hand[0], TH.hand[1], _e, "N0")["result"];
+			}
+		}
+	}
+	// それ以外の場合はランダムハンドに対する勝率を計算する。
+	if (_rate < 0) {
+		_rate = (float)_saorirequest("TexasHoldemUtil", "estimate", _aryvn(TH.community) , TH.community[0], TH.community[1], TH.community[2], TH.n_players, TH.hand[0], TH.hand[1])["result"];
+	}
+
+	// 手札とコミュニティカードを合わせることで役が出来ているなら
+	// raiseする。
+	TH.strength = _strength;
+	if (_community_strength < _strength && _strength >= TH.Hand.ThreeOfAKind) {
+		_ret += "raise";
+		_ret += TH.pot;
+	}
+	else if (_hand_strength == TH.Hand.HighCards && _community_strength == TH.Hand.HighCards && _strength >= TH.Hand.OnePair) {
+		_ret += "raise";
+		_ret += TH.pot;
+	}
+	else if (_hand_strength == TH.Hand.HighCards && _community_strength == TH.Hand.OnePair && _strength >= TH.Hand.TwoPair) {
+		_ret += "raise";
+		_ret += TH.pot;
+	}
+	else if (ASEARCH("check", _action) != -1) {
+		_ret += "check";
+	}
+	// 推定勝率がオッズに合うならcallする。
+	else if (_rate * (TH.pot + TH.total_bet + TH.current_bet) / TH.current_bet >= 100) {
+		_ret += "call";
+	}
+	else {
+		_ret += "fold";
+	}
+	return _ret;
+}
+
+array TH.AI.Turn(array _action)
+{
+	array _ret = {};
+	int _strength = (int)_saorirequest("TexasHoldemUtil", "hand", TH.community[0], TH.community[1], TH.community[2], TH.community[3], TH.hand[0], TH.hand[1])["result"];
+	float _rate = -1;
+	if (TH.current_bet > 0) {
+		array _list = {};
+		array suit = {"S", "H", "C", "D"};
+		for (int i = 0; suit[i] != nil; i++) {
+			string _s = suit[i];
+			int _num = (int)_substr(TH.community[0], 1, 2);
+			if (ASEARCH(_s + _num, _list) == -1) {
+				_list += _s + _num;
+			}
+		}
+		array _l = {};
+		_l = TH.hand;
+		for (int i = 0; TH.community[i] != nil; i++) {
+			_l += TH.community[i];
+		}
+		for (int i = 0; TH.community[i] != nil; i++) {
+			string _e = TH.community[i];
+			int _pos  = ASEARCH(_e, _list);
+			if (_pos != -1) {
+				_list[_pos] = nil;
+			}
+		}
+		if (ARRAYSIZE(_list) > 0) {
+			int _sum  = 0;
+			for (int i = 0; _list[i] != nil; i++) {
+				string _e = _list[i];
+				_rate = (float)_saorirequest("TexasHoldemUtil", "estimate", _aryvn(TH.community) , TH.community[0], TH.community[1], TH.community[2], TH.n_players, TH.hand[0], TH.hand[1], _e, "N0")["result"];
+			}
+		}
+	}
+	if (_rate < 0) {
+		_rate = (float)_saorirequest("TexasHoldemUtil", "estimate", _aryvn(TH.community) , TH.community[0], TH.community[1], TH.community[2], TH.n_players, TH.hand[0], TH.hand[1])["result"];
+	}
+	if (_strength > TH.strength) {
+		TH.strength = _strength;
+		_ret += "raise";
+		_ret += TH.pot;
+	}
+	else if (ASEARCH("check", _action) != -1) {
+		_ret += "check";
+	}
+	else if (_rate * (TH.pot + TH.total_bet + TH.current_bet) / TH.current_bet >= 100) {
+		_ret += "call";
+	}
+	else {
+		_ret += "fold";
+	}
+	return _ret;
+}
+
+array TH.AI.River(array _action)
+{
+	array _ret = {};
+	int _strength = (int)_saorirequest("TexasHoldemUtil", "hand", TH.community[0], TH.community[1], TH.community[2], TH.community[3], TH.community[4], TH.hand[0], TH.hand[1])["result"];
+	float _rate = -1;
+	if (TH.current_bet > 0) {
+		array _list = {};
+		array suit = {"S", "H", "C", "D"};
+		for (int i = 0; suit[i] != nil; i++) {
+			string _s = suit[i];
+			int _num = (int)_substr(TH.community[0], 1, 2);
+			if (ASEARCH(_s + _num, _list) == -1) {
+				_list += _s + _num;
+			}
+		}
+		array _l = {};
+		_l = TH.hand;
+		for (int i = 0; TH.community[i] != nil; i++) {
+			_l += TH.community[i];
+		}
+		for (int i = 0; TH.community[i] != nil; i++) {
+			string _e = TH.community[i];
+			int _pos  = ASEARCH(_e, _list);
+			if (_pos != -1) {
+				_list[_pos] = nil;
+			}
+		}
+		if (ARRAYSIZE(_list) > 0) {
+			int _sum  = 0;
+			for (int i = 0; _list[i] != nil; i++) {
+				string _e = _list[i];
+				_rate = (float)_saorirequest("TexasHoldemUtil", "estimate", _aryvn(TH.community) , TH.community[0], TH.community[1], TH.community[2], TH.n_players, TH.hand[0], TH.hand[1], _e, "N0")["result"];
+			}
+		}
+	}
+	if (_rate < 0) {
+		_rate = (float)_saorirequest("TexasHoldemUtil", "estimate", _aryvn(TH.community) , TH.community[0], TH.community[1], TH.community[2], TH.n_players, TH.hand[0], TH.hand[1])["result"];
+	}
+	if (_strength > TH.strength) {
+		TH.strength = _strength;
+		_ret += "raise";
+		_ret += TH.pot;
+	}
+	else if (ASEARCH("check", _action) != -1) {
+		_ret += "check";
+	}
+	else if (_rate * (TH.pot + TH.total_bet + TH.current_bet) / TH.current_bet >= 100) {
+		_ret += "call";
+	}
+	else {
+		_ret += "fold";
+	}
+	return _ret;
+}
