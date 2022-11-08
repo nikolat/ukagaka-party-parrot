@@ -54,7 +54,8 @@ string TH.talk.round.start()
 string TH.talk.round.win()
 {
 	TH.save.keep_move = 1;
-	return move_jump() + "\_w[200]" + move_jump() + "\e";
+	dance = 0;
+	return move_jump() + "\_w[200]" + move_jump() + "\_w[200]" + move_init() + "\e";
 }
 //ドロップアウト
 string TH.talk.round.dropout()
@@ -103,13 +104,11 @@ string move_jump()
 		s1 += "\p[" + scope + "]";
 		s1 += "\![set,alignmenttodesktop,free]";
 		s1 += "\![moveasync,--Y=-" + surface_height[scope] + ",--time=200,--base=me]";
-		s1 += "\_w[150]";
 		s2 += "\p[" + scope + "]";
 		s2 += "\![moveasync,--Y=" + surface_height[scope] + ",--time=200,--base=me]";
-		s2 += "\_w[150]";
 		s2 += "\![set,alignmenttodesktop,default]";
 	}
-	return s1 + s2;
+	return s1 + "\_w[300]" + s2;
 }
 string move_init()
 {
