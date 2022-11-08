@@ -8,54 +8,118 @@
 //**********************************************************
 string TH.Version = "POKER/1.0";
 string TH.GhostName = "Party Parrot";
+string TH.save.keep_move = 0;
 //ゲーム開始
 string TH.talk.game_start()
 {
-	return dance_all() + "\e";
+	return move_provoke() + "\e";
 }
 //各種アクション
 string TH.talk.action.bet()
 {
-	return dance_all() + "\e";
+	return move_init() + "\e";
 }
 string TH.talk.action.raise()
 {
-	return dance_all() + "\e";
+	return move_provoke() + "\e";
 }
 string TH.talk.action.allin()
 {
-	return dance_all() + "\e";
+	return move_provoke() + "\e";
 }
 string TH.talk.action.check()
 {
-	return dance_all() + "\e";
+	return move_init() + "\e";
 }
 string TH.talk.action.call()
 {
-	return dance_all() + "\e";
+	return move_init() + "\e";
 }
 string TH.talk.action.fold()
 {
-	return dance_all() + "\e";
+	dance = 0;
+	dance_speed = 0;
+	return show_scope_all() + "\e";
+}
+//ラウンド開始
+string TH.talk.round.start()
+{
+	if (TH.save.keep_move) {
+		TH.save.keep_move = 0;
+		return "";
+	}
+	return move_init() + "\e";
 }
 //ラウンド勝利
 string TH.talk.round.win()
 {
-	return dance_all() + "\e";
+	TH.save.keep_move = 1;
+	return move_jump() + "\_w[200]" + move_jump() + "\e";
 }
 //ドロップアウト
 string TH.talk.round.dropout()
 {
-	return dance_all() + "\e";
+	TH.save.keep_move = 1;
+	dance = 0;
+	return move_upset() + move_jump() + "\e";
 }
 //ゲーム終了
 string TH.talk.game_result.win()
 {
-	return dance_all() + "\e";
+	return move_jump() + "\_w[200]" + move_jump() + "\e";
 }
 string TH.talk.game_result.lose()
 {
-	return dance_all() + "\e";
+	return move_init() + "\e";
+}
+string move_provoke()
+{
+	string s;
+	for (int i = 0; i <= maxscope; i++) {
+		s += "\p[" + i + "]\i[3]";
+	}
+	s += "\_w[1000]";
+	for (int i = 0; i <= maxscope; i++) {
+		s += "\p[" + i + "]\i[1]";
+	}
+	return s;
+}
+string move_upset()
+{
+	string s;
+	for (int i = 0; i <= maxscope; i++) {
+		s += "\p[" + i + "]\i[0]\![set,scaling,,-100]";
+	}
+	return s;
+}
+string move_jump()
+{
+	string s1;
+	string s2;
+	for (int scope = 0; scope <= maxscope; scope++) {
+		array asize = get_surface_size(scope);
+		surface_width[scope] = asize[0];
+		surface_height[scope] = asize[1];
+		s1 += "\p[" + scope + "]";
+		s1 += "\![set,alignmenttodesktop,free]";
+		s1 += "\![moveasync,--Y=-" + surface_height[scope] + ",--time=200,--base=me]";
+		s1 += "\_w[150]";
+		s2 += "\p[" + scope + "]";
+		s2 += "\![moveasync,--Y=" + surface_height[scope] + ",--time=200,--base=me]";
+		s2 += "\_w[150]";
+		s2 += "\![set,alignmenttodesktop,default]";
+	}
+	return s1 + s2;
+}
+string move_init()
+{
+	dance = 1;
+	dance_speed = 1;
+	string s;
+	for (int i = 0; i <= maxscope; i++) {
+		s += "\p[" + i + "]\![moveasync,cancel]\i[1]\![set,scaling,,100]\![set,alignmenttodesktop,default]";
+	}
+	return s;
 }
 
 //**********************************************************
@@ -162,6 +226,7 @@ string OnPokerNotify(dict ref)
 		}
 		TH.round_players = _aryvn(TH.players);
 		TH.n_players = TH.round_players;
+		return TH.talk.round.start();
 	}
 	else if (_command == "hand") {
 		//Reference2: 配られたカードの情報
