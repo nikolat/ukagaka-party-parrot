@@ -2,7 +2,7 @@ charset,UTF-8
 file,delete.txtd43fe9970d4d5cdb7de20b9b4d7fbc6bsize=234date=2012-12-21T00:00:00
 file,ghost/master/akari.dll604e9d9fa66b8ad367d22ccd682a74e4size=889856date=2012-12-21T00:00:00
 file,ghost/master/descript.txt4c4e8a7f68b8cb1c8329166a6b82908bsize=292date=2012-12-21T00:00:00
-file,ghost/master/ex/TexasHoldem/dic_texas_holdem.azr894926176bffe9d13b2a682bd153ca2dsize=7730date=2012-12-21T00:00:00
+file,ghost/master/ex/TexasHoldem/dic_texas_holdem.azre0b75b9f000f2526b40d32bef8f96e94size=9259date=2012-12-21T00:00:00
 file,ghost/master/ex/TexasHoldem/dic_texas_holdem_ai.azrdf3f0c4f2f61a88d84934a59fc00ab6bsize=8113date=2012-12-21T00:00:00
 file,ghost/master/icon/parrot0.ico87796955967d8954e3063f575fc3c252size=90022date=2012-12-21T00:00:00
 file,ghost/master/icon/parrot1.ico87caa52d6cfcdfcab7fb20c32262477esize=90022date=2012-12-21T00:00:00
@@ -14,7 +14,7 @@ file,ghost/master/icon/parrot6.ico3db92f3b718c7509a435a7cd23e491dfsize=90022d
 file,ghost/master/icon/parrot7.icoeaf555fedda2e5acf391a7b7bba116e5size=90022date=2012-12-21T00:00:00
 file,ghost/master/icon/parrot8.ico7abba324694fc78449abbd211aac9ec6size=90022date=2012-12-21T00:00:00
 file,ghost/master/icon/parrot9.ico982f0bcd117f2c690f986f3bbbf555cesize=90022date=2012-12-21T00:00:00
-file,ghost/master/main.azr477d542bd7f147f3e372bfba1ba9ee7csize=11629date=2012-12-21T00:00:00
+file,ghost/master/main.azr15271ddd301854f9020715485df8f172size=11649date=2012-12-21T00:00:00
 file,ghost/master/saori/HandUtil/HandUtil.dlld382e237a4b365a302b281664d9e9d36size=38400date=2012-12-21T00:00:00
 file,ghost/master/saori/HandUtil/HandUtil_readme.txtc6c761a051d6970b022e1aaffe24d11asize=4362date=2012-12-21T00:00:00
 file,ghost/master/saori/TexasHoldemUtil/LICENSEaeae5fc0093d912c2288602e1614276asize=1049date=2012-12-21T00:00:00
