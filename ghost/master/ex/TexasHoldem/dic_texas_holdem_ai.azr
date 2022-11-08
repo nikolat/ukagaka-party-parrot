@@ -114,7 +114,7 @@ array TH.AI.Flop(array _action)
 				_list[_pos] = nil;
 			}
 		}
-		if (ARRAYSIZE(_list) > 0) {
+		if (_aryvn(_list) > 0) {
 			int _sum  = 0;
 			for (int i = 0; _list[i] != nil; i++) {
 				string _e = _list[i];
@@ -182,7 +182,7 @@ array TH.AI.Turn(array _action)
 				_list[_pos] = nil;
 			}
 		}
-		if (ARRAYSIZE(_list) > 0) {
+		if (_aryvn(_list) > 0) {
 			int _sum  = 0;
 			for (int i = 0; _list[i] != nil; i++) {
 				string _e = _list[i];
@@ -237,7 +237,7 @@ array TH.AI.River(array _action)
 				_list[_pos] = nil;
 			}
 		}
-		if (ARRAYSIZE(_list) > 0) {
+		if (_aryvn(_list) > 0) {
 			int _sum  = 0;
 			for (int i = 0; _list[i] != nil; i++) {
 				string _e = _list[i];
