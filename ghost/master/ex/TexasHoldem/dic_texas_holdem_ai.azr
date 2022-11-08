@@ -75,7 +75,7 @@ array TH.AI.PreFlop(array _action)
 	}
 	// ベット額が高すぎる場合は一部の強い手を除いて降りる。
 	else if (TH.blind * 5 < TH.current_bet) {
-		if (vs_allin == 0) {
+		if (_vs_allin == 0) {
 			_ret = {};
 			_ret += "fold";
 		}
