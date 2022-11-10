@@ -3,7 +3,7 @@ file,delete.txtd43fe9970d4d5cdb7de20b9b4d7fbc6bsize=234date=2012-12-21T00:00:
 file,ghost/master/akari.dll604e9d9fa66b8ad367d22ccd682a74e4size=889856date=2012-12-21T00:00:00
 file,ghost/master/descript.txt4c4e8a7f68b8cb1c8329166a6b82908bsize=292date=2012-12-21T00:00:00
 file,ghost/master/ex/TexasHoldem/dic_texas_holdem.azr9ae1bae5f2a07b2478ecc312fab1d00esize=9271date=2012-12-21T00:00:00
-file,ghost/master/ex/TexasHoldem/dic_texas_holdem_ai.azre43aca83232fa361b0ffd58b263f2ffbsize=8114date=2012-12-21T00:00:00
+file,ghost/master/ex/TexasHoldem/dic_texas_holdem_ai.azr37d988befd47ee749be876a9af430a5csize=8228date=2012-12-21T00:00:00
 file,ghost/master/icon/parrot0.ico87796955967d8954e3063f575fc3c252size=90022date=2012-12-21T00:00:00
 file,ghost/master/icon/parrot1.ico87caa52d6cfcdfcab7fb20c32262477esize=90022date=2012-12-21T00:00:00
 file,ghost/master/icon/parrot2.ico01c71a3e495c2e89be91f0267ca302c6size=90022date=2012-12-21T00:00:00
