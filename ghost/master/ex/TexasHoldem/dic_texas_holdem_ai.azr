@@ -86,9 +86,9 @@ array TH.AI.PreFlop(array _action)
 array TH.AI.Flop(array _action)
 {
 	array _ret = {};
-	int _hand_strength = (int)_saorirequest("TexasHoldemUtil", "hand", TH.hand[0], TH.hand[1])["result"];
-	int _community_strength = (int)_saorirequest("TexasHoldemUtil", "hand", TH.community[0], TH.community[1], TH.community[2])["result"];
-	int _strength = (int)_saorirequest("TexasHoldemUtil", "hand", TH.community[0], TH.community[1], TH.community[2], TH.hand[0], TH.hand[1])["result"];
+	int _hand_strength = (int)_saorirequest("TexasHoldemUtil", "hand", TH.hand[0], TH.hand[1])["Result"];
+	int _community_strength = (int)_saorirequest("TexasHoldemUtil", "hand", TH.community[0], TH.community[1], TH.community[2])["Result"];
+	int _strength = (int)_saorirequest("TexasHoldemUtil", "hand", TH.community[0], TH.community[1], TH.community[2], TH.hand[0], TH.hand[1])["Result"];
 	// ベットされている場合はコミュニティカードとペアになっている可能性
 	// があるのでそれを想定した勝率を計算する。
 	float _rate = -1;
@@ -118,13 +118,13 @@ array TH.AI.Flop(array _action)
 			int _sum  = 0;
 			for (int i = 0; _list[i] != nil; i++) {
 				string _e = _list[i];
-				_rate = (float)_saorirequest("TexasHoldemUtil", "estimate", _aryvn(TH.community) , TH.community[0], TH.community[1], TH.community[2], TH.n_players, TH.hand[0], TH.hand[1], _e, "N0")["result"];
+				_rate = (float)_saorirequest("TexasHoldemUtil", "estimate", _aryvn(TH.community) , TH.community[0], TH.community[1], TH.community[2], TH.n_players, TH.hand[0], TH.hand[1], _e, "N0")["Result"];
 			}
 		}
 	}*/
 	// それ以外の場合はランダムハンドに対する勝率を計算する。
 	if (_rate < 0) {
-		_rate = (float)_saorirequest("TexasHoldemUtil", "estimate", _aryvn(TH.community) , TH.community[0], TH.community[1], TH.community[2], TH.n_players, TH.hand[0], TH.hand[1])["result"];
+		_rate = (float)_saorirequest("TexasHoldemUtil", "estimate", _aryvn(TH.community) , TH.community[0], TH.community[1], TH.community[2], TH.n_players, TH.hand[0], TH.hand[1])["Result"];
 	}
 
 	// 手札とコミュニティカードを合わせることで役が出来ているなら
@@ -158,7 +158,7 @@ array TH.AI.Flop(array _action)
 array TH.AI.Turn(array _action)
 {
 	array _ret = {};
-	int _strength = (int)_saorirequest("TexasHoldemUtil", "hand", TH.community[0], TH.community[1], TH.community[2], TH.community[3], TH.hand[0], TH.hand[1])["result"];
+	int _strength = (int)_saorirequest("TexasHoldemUtil", "hand", TH.community[0], TH.community[1], TH.community[2], TH.community[3], TH.hand[0], TH.hand[1])["Result"];
 	float _rate = -1;
 /*	if (TH.current_bet > 0) {
 		array _list = {};
@@ -186,12 +186,12 @@ array TH.AI.Turn(array _action)
 			int _sum  = 0;
 			for (int i = 0; _list[i] != nil; i++) {
 				string _e = _list[i];
-				_rate = (float)_saorirequest("TexasHoldemUtil", "estimate", _aryvn(TH.community) , TH.community[0], TH.community[1], TH.community[2], TH.community[3], TH.n_players, TH.hand[0], TH.hand[1], _e, "N0")["result"];
+				_rate = (float)_saorirequest("TexasHoldemUtil", "estimate", _aryvn(TH.community) , TH.community[0], TH.community[1], TH.community[2], TH.community[3], TH.n_players, TH.hand[0], TH.hand[1], _e, "N0")["Result"];
 			}
 		}
 	}*/
 	if (_rate < 0) {
-		_rate = (float)_saorirequest("TexasHoldemUtil", "estimate", _aryvn(TH.community) , TH.community[0], TH.community[1], TH.community[2], TH.community[3], TH.n_players, TH.hand[0], TH.hand[1])["result"];
+		_rate = (float)_saorirequest("TexasHoldemUtil", "estimate", _aryvn(TH.community) , TH.community[0], TH.community[1], TH.community[2], TH.community[3], TH.n_players, TH.hand[0], TH.hand[1])["Result"];
 	}
 	if (_strength > TH.strength) {
 		TH.strength = _strength;
@@ -213,7 +213,7 @@ array TH.AI.Turn(array _action)
 array TH.AI.River(array _action)
 {
 	array _ret = {};
-	int _strength = (int)_saorirequest("TexasHoldemUtil", "hand", TH.community[0], TH.community[1], TH.community[2], TH.community[3], TH.community[4], TH.hand[0], TH.hand[1])["result"];
+	int _strength = (int)_saorirequest("TexasHoldemUtil", "hand", TH.community[0], TH.community[1], TH.community[2], TH.community[3], TH.community[4], TH.hand[0], TH.hand[1])["Result"];
 	float _rate = -1;
 /*	if (TH.current_bet > 0) {
 		array _list = {};
@@ -241,12 +241,12 @@ array TH.AI.River(array _action)
 			int _sum  = 0;
 			for (int i = 0; _list[i] != nil; i++) {
 				string _e = _list[i];
-				_rate = (float)_saorirequest("TexasHoldemUtil", "estimate", _aryvn(TH.community) , TH.community[0], TH.community[1], TH.community[2], TH.community[3], TH.community[4], TH.n_players, TH.hand[0], TH.hand[1], _e, "N0")["result"];
+				_rate = (float)_saorirequest("TexasHoldemUtil", "estimate", _aryvn(TH.community) , TH.community[0], TH.community[1], TH.community[2], TH.community[3], TH.community[4], TH.n_players, TH.hand[0], TH.hand[1], _e, "N0")["Result"];
 			}
 		}
 	}*/
 	if (_rate < 0) {
-		_rate = (float)_saorirequest("TexasHoldemUtil", "estimate", _aryvn(TH.community) , TH.community[0], TH.community[1], TH.community[2], TH.community[3], TH.community[4], TH.n_players, TH.hand[0], TH.hand[1])["result"];
+		_rate = (float)_saorirequest("TexasHoldemUtil", "estimate", _aryvn(TH.community) , TH.community[0], TH.community[1], TH.community[2], TH.community[3], TH.community[4], TH.n_players, TH.hand[0], TH.hand[1])["Result"];
 	}
 	if (_strength > TH.strength) {
 		TH.strength = _strength;
