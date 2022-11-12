@@ -1,4 +1,7 @@
-
+//**********************************************************
+// 卓上誘技用カジノチップ(青)とほぼ等価
+// https://github.com/Tatakinov/desktop_tempter_casino_chip_blue
+//**********************************************************
 int TH.Hand.None = 0;
 int TH.Hand.HighCards = 1;
 int TH.Hand.OnePair = 2;
