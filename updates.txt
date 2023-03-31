@@ -14,7 +14,7 @@ file,ghost/master/icon/parrot6.ico3db92f3b718c7509a435a7cd23e491dfsize=90022d
 file,ghost/master/icon/parrot7.icoeaf555fedda2e5acf391a7b7bba116e5size=90022date=2012-12-21T00:00:00
 file,ghost/master/icon/parrot8.ico7abba324694fc78449abbd211aac9ec6size=90022date=2012-12-21T00:00:00
 file,ghost/master/icon/parrot9.ico982f0bcd117f2c690f986f3bbbf555cesize=90022date=2012-12-21T00:00:00
-file,ghost/master/main.azr15271ddd301854f9020715485df8f172size=11649date=2012-12-21T00:00:00
+file,ghost/master/main.azre485d1bb96f0ca4a40ff70e63019bc8dsize=12837date=2012-12-21T00:00:00
 file,ghost/master/saori/HandUtil/HandUtil.dlld382e237a4b365a302b281664d9e9d36size=38400date=2012-12-21T00:00:00
 file,ghost/master/saori/HandUtil/HandUtil_readme.txtc6c761a051d6970b022e1aaffe24d11asize=4362date=2012-12-21T00:00:00
 file,ghost/master/saori/TexasHoldemUtil/LICENSEaeae5fc0093d912c2288602e1614276asize=1049date=2012-12-21T00:00:00
